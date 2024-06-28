@@ -4,19 +4,18 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 def get_menu_kb() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
+
     builder.row(
-        KeyboardButton(text='🟥 Red'),
-        KeyboardButton(text='🟩 Green'),
-        KeyboardButton(text='⬛️ Black')
-    )
-    builder.row(
-        KeyboardButton(text='💲 Daily'),
-        KeyboardButton(text='💰 Balance')
+        KeyboardButton(text='💲 Купить подписку')
     )
 
     builder.row(
-        KeyboardButton(text='📊 Stats'),  # (🛠)
-        KeyboardButton(text='📈 Leaders')
+        KeyboardButton(text='⭐️ Тарифы')
+    )
+
+    builder.row(
+        KeyboardButton(text='📊 Статистика'),  # (🛠)
+        KeyboardButton(text='👤 Ваш профиль')
     )
 
     return builder.as_markup(resize_keyboard=True, input_field_placeholder="Что делаем?")
@@ -30,41 +29,46 @@ def get_cancel_kb() -> ReplyKeyboardMarkup:
     return kb.as_markup(resize_keyboard=True, input_field_placeholder="Что делаем?")
 
 
-def get_webapp_kb():
+def get_access_kb():
     buttons = [
         [
-            InlineKeyboardButton(text='Click!', web_app=WebAppInfo(url='https://cocounter.reflex.run/')),
+            InlineKeyboardButton(text='🔒 Получить доступ', callback_data='access_btn')
         ]
     ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
 
-def get_bet_kb(last=None):
-    if last is None:
-        last = 100
+def get_rates_kb():
     buttons = [
         [
-            InlineKeyboardButton(text='-10', callback_data='bet_min_10'),
+            InlineKeyboardButton(text='🟠 1 месяц', callback_data='one_month'),
+            InlineKeyboardButton(text='🟡 3 месяца', callback_data='three_month'),
+            InlineKeyboardButton(text='🟢 12 месяцев', callback_data='twelve_month')
+        ]
+    ]
 
-            InlineKeyboardButton(text='Default', callback_data='bet_standard'),
-            InlineKeyboardButton(text='+10', callback_data='bet_plus_10')
-        ],
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def get_payment_kb():
+    buttons = [
         [
-            InlineKeyboardButton(text='/2', callback_data='bet_div'),
-            InlineKeyboardButton(text=f'{last}', callback_data='bet_now'),
-            InlineKeyboardButton(text='x2', callback_data='bet_double')
-        ],
+            InlineKeyboardButton(text='✅ Отправить скрин / ссылку на транзакцию', callback_data='pending_payment')
+        ]
+    ]
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def get_back_kb():
+    buttons = [
         [
-            InlineKeyboardButton(text='-100', callback_data='bet_min_100'),
-            InlineKeyboardButton(text='All In', callback_data='bet_allin'),
-            InlineKeyboardButton(text='+100', callback_data='bet_plus_100')
-        ],
-        [
-            InlineKeyboardButton(text='❌', callback_data='bet_no'),
-            InlineKeyboardButton(text='✅', callback_data='bet_yes')
-        ],
+            InlineKeyboardButton(text='⬅️ Назад', callback_data='cancel_pending_payment')
+        ]
     ]
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)

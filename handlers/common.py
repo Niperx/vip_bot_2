@@ -5,6 +5,8 @@ import os.path
 import aiogram.types
 
 from aiogram import Bot, types, Router, F
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters.command import Command
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.utils.deep_linking import create_start_link
@@ -17,6 +19,10 @@ from modules.chat_type import ChatTypeFilter
 
 bot = Bot(token=TOKEN)
 router = Router()
+
+
+class PaymentStage(StatesGroup):
+    waiting_for_pending = State()
 
 
 async def get_logs(text, username='Anonim', name='Anonim'):
@@ -66,7 +72,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
     print(await get_info_about_user_message(message))
     await bot.send_chat_action(chat_id=message.chat.id, action='typing')
 
-    text = 'Добро пожаловать в это  🎰 <b>Чёртово Казино</b> 🎰'
+    text = 'Добро пожаловать в <b>Сигналы</b>'
 
     user_id = message.from_user.id
     chk = await check_user_id(user_id)
@@ -88,10 +94,105 @@ async def cmd_start(message: types.Message, command: CommandObject):
                     await bot.send_message(chat_id=code,
                                            text=f'У вас новый реферал {message.from_user.first_name}')
                 await add_money(code, balance)
-            text += f'\n<i>(Ваш бонус: {balance} коинов по реферальной системе)</i>'
+            text += f'\n<i>(Ваш бонус: ${balance} по реферальной системе)</i>'
         await create_user(user_id, message.from_user.username, balance, code)
+        text += '\n<i>(Ваш аккаунт успешно создан)</i>'
 
     await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
+
+
+@router.message(Command(commands=["profile"]))
+@router.message(F.text == '👤 Ваш профиль')
+async def cmd_profile(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    text = f'👤 {message.from_user.first_name}\n\n' \
+           f'<b>Активные подписки:</b>\n'
+    payment_time = await check_payment_time(message.from_user.id)
+
+    if payment_time < 0:
+        text += f'💳 Нет подписок'
+    else:
+        text += f'💳 Осталось дней подписки: {round(payment_time / 60 / 60 / 24)}\n\n'
+        text += 'Доступы: \n' \
+                'Раз - \n' \
+                'Два - '
+
+    await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
+    print(payment_time)
+    # await message.answer(money_time)
+
+
+@router.message(Command(commands=["get"]))
+async def cmd_profile(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    await update_payment_time(message.from_user.id, 1)
+
+
+@router.message(Command(commands=["rates"]))
+@router.message(F.text == '⭐️ Тарифы')
+async def cmd_access(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    text = f'Условия вступления\n\n' \
+           f'🟠 1 месяц -- $100\n' \
+           f'🟡 3 месяца -- $300\n' \
+           f'🟢 12 месяцев -- $1200'
+
+    await message.answer(text, reply_markup=get_access_kb(), parse_mode='HTML')
+
+
+@router.callback_query(F.data == 'access_btn')
+async def process_benefit(callback: types.CallbackQuery):
+    print(await get_info_about_user_callback(callback))
+    text = '🤘 Выберите необходимый вам тариф:'
+    await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_rates_kb())
+
+
+@router.callback_query(F.data == 'one_month')
+@router.callback_query(F.data == 'three_month')
+@router.callback_query(F.data == 'twelve_month')
+async def process_month(callback: types.CallbackQuery, state: FSMContext):
+    print(await get_info_about_user_callback(callback))
+    await state.update_data(plan=callback.data)
+
+    value = 0
+
+    print(callback.data)
+
+    match callback.data:
+        case 'one_month':
+            value = 100
+        case 'three_month':
+            value = 300
+        case 'twelve_month':
+            value = 1200
+
+    text = f'Оплатите {value} USDT на любой из кошельков и прикрепите скриншот, либо ссылку на транзакцию.\n\n' \
+           f"ERC20 USDT : \n<code>0x1b7C958510cE37D71Ee0e2F7aB13783D41bf4E6a</code>\n"\
+           f"BEP20 USDT : \n<code>0x1b7C958510cE37D71Ee0e2F7aB13783D41bf4E6a</code>\n"\
+           f"BEP20 BUSD : \n<code>0x1b7C958510cE37D71Ee0e2F7aB13783D41bf4E6a</code>\n"\
+           f"TRC20 USDT : \n<code>TTg3Sv8dpgjhBeAixA4t2RgSBrqaJ3dmJw</code>"
+
+    await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_payment_kb())
+
+
+@router.callback_query(F.data == 'pending_payment')
+async def process_benefit(callback: types.CallbackQuery, state: FSMContext):
+    print(await get_info_about_user_callback(callback))
+    text = f"Ожидание платежа...\n\n"\
+           f"❗️ ПРИКРЕПИТЕ ФОТО ЧЕКА ЛИБО ССЫЛКУ ❗️\n\n"\
+           f'Нажмите на кнопку "⬅️ Назад", если что-то пошло не так или вы передумали'
+    await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_back_kb())
+
+    await state.set_state(PaymentStage.waiting_for_pending)
+
+
+# получить фото и сообщить админу
 
 
 @router.message(Command(commands=["balance"]))

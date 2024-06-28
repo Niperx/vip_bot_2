@@ -11,7 +11,9 @@ async def check_db():  # Проверка на ДБ, при отсутствии
         SELECT name FROM sqlite_master WHERE type='table' AND name='{users}';
         ''')
 
-    if not list_of_tables:
+    print(list_of_tables.fetchall())
+
+    if not list_of_tables.fetchall():
         print('DB Created')
         cur.execute('''
                CREATE TABLE users (
@@ -20,7 +22,7 @@ async def check_db():  # Проверка на ДБ, при отсутствии
                                   UNIQUE,
                username   TEXT,
                balance    INTEGER,
-               money_time TEXT,
+               subscribe_time TEXT,
                ref_id     INTEGER,
                reg_time   TEXT
                )
@@ -120,6 +122,32 @@ async def add_money(user_id, money):
     con.close()
 
 
+async def add_subscribe_time(user_id, time):
+    con = sqlite3.connect('db/main.db')
+    cur = con.cursor()
+
+    # Пополнение у пользователя
+    cur.execute(f'SELECT balance FROM users WHERE user_id = {user_id}')
+    old_balance = cur.fetchall()[0][0]
+    new_balance = old_balance + time
+    cur.execute(F'UPDATE users SET balance = {new_balance} WHERE user_id = {user_id}')
+
+    if money > 0 and REF_MODE:
+        # Пополнение у реферала
+        cur.execute(f'SELECT ref_id FROM users WHERE user_id = {user_id}')
+
+        ref = cur.fetchall()[0][0]
+
+        if ref:
+            cur.execute(f'SELECT balance FROM users WHERE user_id = {ref}')
+            old_balance = cur.fetchall()[0][0]
+            new_balance = old_balance + int(money * (REF_PERC / 100))
+            cur.execute(F'UPDATE users SET balance = {new_balance} WHERE user_id = {ref}')
+
+    con.commit()
+    con.close()
+
+
 async def get_leaders(num):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
@@ -130,29 +158,30 @@ async def get_leaders(num):
     return tops_db
 
 
-async def check_money_time(user_id):
+async def check_payment_time(user_id):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
     date_format_str = '%Y-%m-%d %H:%M:%S.%f'
 
-    cur.execute(f'SELECT money_time FROM users WHERE user_id = {user_id}')
+    cur.execute(f'SELECT subscribe_time FROM users WHERE user_id = {user_id}')
     db_time = cur.fetchall()[0][0]
-    start = datetime.strptime(db_time, date_format_str)
+    end = datetime.strptime(db_time, date_format_str)
     now = datetime.now()
-    diff = now - start
+    diff = end - now
 
     return diff.total_seconds()
 
 
-async def update_money_time(user_id, days=1):
+async def update_payment_time(user_id, month=1):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
     print(datetime.now(), user_id)
 
-    cur.execute(f'UPDATE users SET money_time = ? WHERE user_id = ?',
-                (datetime.now() + timedelta(days=days), user_id))
+    cur.execute(f'UPDATE users SET subscribe_time = ? WHERE user_id = ?',
+                (datetime.now() + timedelta(days=month * 30), user_id))
+    # тут можно изменить вид добавления времени, т.е. добавлять или изменять время
     con.commit()
     con.close()
 
