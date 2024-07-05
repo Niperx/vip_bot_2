@@ -1,11 +1,16 @@
+import datetime
 import logging
 import config
 import asyncio
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from modules.commands_list import CMD_LIST
-from handlers import common
+from handlers import common, buy
 from db.db_manage import check_db
 
 bot = Bot(token=config.TOKEN)
@@ -33,13 +38,19 @@ async def main():
     )
     logger.info("Starting bot")
 
+    # scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+    # scheduler.add_job(buy.check_subscribe, trigger='interval', seconds=20)
+    # scheduler.start()
+
     dp.include_routers(
-        common.router
+        common.router,
+        buy.router
     )
+    # dp.startup.register(on_startup)
 
     await set_commands(bot)
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -5,7 +5,6 @@ import os.path
 import aiogram.types
 
 from aiogram import Bot, types, Router, F
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters.command import Command
 from aiogram.filters import CommandStart, CommandObject
@@ -14,11 +13,14 @@ from aiogram.utils.deep_linking import create_start_link
 from db.db_manage import *
 from config import TOKEN
 
+from modules import admins_list
 from modules.buttons_list import *
 from modules.chat_type import ChatTypeFilter
 
 bot = Bot(token=TOKEN)
 router = Router()
+
+admin = admins_list.ADMINS[1]
 
 
 class PaymentStage(StatesGroup):
@@ -72,7 +74,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
     print(await get_info_about_user_message(message))
     await bot.send_chat_action(chat_id=message.chat.id, action='typing')
 
-    text = 'Добро пожаловать в <b>Сигналы</b>'
+    text = 'Добро пожаловать в помощника для трейдинга, более подробно об этом боте мы рассказали в видео: (ссылка)'
 
     user_id = message.from_user.id
     chk = await check_user_id(user_id)
@@ -101,6 +103,21 @@ async def cmd_start(message: types.Message, command: CommandObject):
     await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
 
 
+@router.message(Command(commands=["about"]))
+@router.message(F.text == '❔ Об этом боте')
+async def cmd_profile(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    text = f"Эти зоны покупок и продаж это алгоритм, который создал мой товарищ и трейдер с огромным стажем, " \
+           f"этот алгоритм не имеет никакого аналога в интернете, для тех кому интересно - они не основаны на индикаторах как у всех, и это не зоны поддержки-сопротивления.\n" \
+           f"Они основаны на нескольких вещах:\n" \
+           f"Математические закономерности фракталы и реальные биржевые объемы.\n" \
+           f"Полную информацию конечно же никто не даст, но думаю что важнее то что это реально отрабатывает каким-то фантастическим чудом, а не то по какому принципу оно работает. "
+
+    await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
+
+
 @router.message(Command(commands=["profile"]))
 @router.message(F.text == '👤 Ваш профиль')
 async def cmd_profile(message: types.Message):
@@ -114,85 +131,44 @@ async def cmd_profile(message: types.Message):
     if payment_time < 0:
         text += f'💳 Нет подписок'
     else:
-        text += f'💳 Осталось дней подписки: {round(payment_time / 60 / 60 / 24)}\n\n'
-        text += 'Доступы: \n' \
-                'Раз - \n' \
-                'Два - '
+        days = round(payment_time / 60 / 60 / 24)
+        days_end = datetime.today() + timedelta(days=1)
+        text += f"💳 Осталось дней подписки: {days} ({days_end.strftime('%a, %d %b %Y')})\n\n"
+        # text += 'Доступы: \n' \
+        #         'Раз - \n' \
+        #         'Два - '
 
     await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
-    print(payment_time)
-    # await message.answer(money_time)
 
 
-@router.message(Command(commands=["get"]))
+@router.message(Command(commands=["stats"]))
+@router.message(F.text == '📊 Статистика')
 async def cmd_profile(message: types.Message):
     print(await get_info_about_user_message(message))
     await bot.send_chat_action(chat_id=message.chat.id, action='typing')
 
-    await update_payment_time(message.from_user.id, 1)
+    stats = await get_stats_all()
+    one, three, six = stats[0], stats[1], stats[2]
 
+    buyers = await count_users_buyers()
+    buyers_month = await get_stats_of_month()
 
-@router.message(Command(commands=["rates"]))
-@router.message(F.text == '⭐️ Тарифы')
-async def cmd_access(message: types.Message):
-    print(await get_info_about_user_message(message))
-    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+    full_money = one * RATES['one'] + three * RATES['three'] + six * RATES['six']
+    month_money = buyers_month[0] * RATES['one'] + buyers_month[1] * RATES['three'] + buyers_month[2] * RATES['six']
 
-    text = f'Условия вступления\n\n' \
-           f'🟠 1 месяц -- $100\n' \
-           f'🟡 3 месяца -- $300\n' \
-           f'🟢 12 месяцев -- $1200'
+    users = await count_users()
 
-    await message.answer(text, reply_markup=get_access_kb(), parse_mode='HTML')
+    text = f'<b>Статистика:</b>\n\n' \
+           f'Кол-во пользователей: {users}\n' \
+           f'Кол-во покупателей: {buyers}\n\n' \
+           f'На сколько месяцев куплено:\n' \
+           f'-- 1 месяц: {one}\n' \
+           f'-- 3 месяца: {three}\n' \
+           f'-- 6 месяцев: {six}\n\n' \
+           f'Прибыль за месяц: ${month_money}\n' \
+           f'Прибыль всего: ${full_money}\n'
 
-
-@router.callback_query(F.data == 'access_btn')
-async def process_benefit(callback: types.CallbackQuery):
-    print(await get_info_about_user_callback(callback))
-    text = '🤘 Выберите необходимый вам тариф:'
-    await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_rates_kb())
-
-
-@router.callback_query(F.data == 'one_month')
-@router.callback_query(F.data == 'three_month')
-@router.callback_query(F.data == 'twelve_month')
-async def process_month(callback: types.CallbackQuery, state: FSMContext):
-    print(await get_info_about_user_callback(callback))
-    await state.update_data(plan=callback.data)
-
-    value = 0
-
-    print(callback.data)
-
-    match callback.data:
-        case 'one_month':
-            value = 100
-        case 'three_month':
-            value = 300
-        case 'twelve_month':
-            value = 1200
-
-    text = f'Оплатите {value} USDT на любой из кошельков и прикрепите скриншот, либо ссылку на транзакцию.\n\n' \
-           f"ERC20 USDT : \n<code>0x1b7C958510cE37D71Ee0e2F7aB13783D41bf4E6a</code>\n"\
-           f"BEP20 USDT : \n<code>0x1b7C958510cE37D71Ee0e2F7aB13783D41bf4E6a</code>\n"\
-           f"BEP20 BUSD : \n<code>0x1b7C958510cE37D71Ee0e2F7aB13783D41bf4E6a</code>\n"\
-           f"TRC20 USDT : \n<code>TTg3Sv8dpgjhBeAixA4t2RgSBrqaJ3dmJw</code>"
-
-    await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_payment_kb())
-
-
-@router.callback_query(F.data == 'pending_payment')
-async def process_benefit(callback: types.CallbackQuery, state: FSMContext):
-    print(await get_info_about_user_callback(callback))
-    text = f"Ожидание платежа...\n\n"\
-           f"❗️ ПРИКРЕПИТЕ ФОТО ЧЕКА ЛИБО ССЫЛКУ ❗️\n\n"\
-           f'Нажмите на кнопку "⬅️ Назад", если что-то пошло не так или вы передумали'
-    await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_back_kb())
-
-    await state.set_state(PaymentStage.waiting_for_pending)
-
-
-# получить фото и сообщить админу
+    await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
 
 
 @router.message(Command(commands=["balance"]))
@@ -208,60 +184,6 @@ async def cmd_check_balance(message: types.Message):
     await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
     await get_logs(f'проверил свой баланс на сумму {int(balance)} коинов', message.from_user.username,
                    message.from_user.first_name)
-
-
-@router.message(Command(commands=["leaders"]))
-@router.message(F.text == '📈 Leaders')
-async def cmd_check_leaders(message: types.Message):
-    print(await get_info_about_user_message(message))
-    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
-
-    lead_text = f"⭐️ <b>ТОП-{LEADERS_LIST} богатейших людей этого чёртово казино!</b> ⭐️️ \n\n"
-    tops_db = await get_leaders(LEADERS_LIST)
-
-    i = 0
-    for top in tops_db:
-        i += 1
-        smile = ''
-        if i <= 3:
-            match i:
-                case 1:
-                    smile = '🥇 '
-                case 2:
-                    smile = '🥈 '
-                case 3:
-                    smile = '🥉 '
-        else:
-            smile = '🎗 '
-        you_mark = ''
-        if message.from_user.username == top[0]:
-            you_mark = '(You)'
-
-        lead_text += f'{smile} {i}. @{top[0]} - {int(top[1])} коинов. {you_mark}\n'
-
-    await message.answer(lead_text, reply_markup=get_menu_kb(), parse_mode='HTML')
-    await get_logs(f'посмотрел список лидеров', message.from_user.username, message.from_user.first_name)
-
-
-@router.message(ChatTypeFilter(chat_type=["private"]), F.text == '📊 Stats')
-async def cmd_check_stats(message: types.Message):
-    print(await get_info_about_user_message(message))
-    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
-    user_id = message.from_user.id
-    link = await create_start_link(bot, f'{user_id}')
-    text = f'<b>Ваша реферальная ссылка:</b> <i>(кликабельно)</i>\n <code>{link}</code>\n\n'
-
-    stats = await get_stats()
-    red, green, black = stats[0], stats[1], stats[2]
-
-    text += (f'📊 <b>Статистика:</b> 📊\n\n'
-             f'🟥 Красный цвет выпал {red} раз(а) 🟥 ({round(red / (red + green + black) * 100)}%)\n\n'
-             f'🟩 Зелёный цвет выпал {green} раз(а) 🟩 ({round(green / (red + green + black) * 100)}%)\n\n'
-             f'⬛️ Чёрный цвет выпал {black} раз(а) ⬛️ ({round(black / (red + green + black) * 100)}%)\n\n'
-             f'Общее число бросков - {red + green + black} раз(а)')
-
-    await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
-    await get_logs(f'посмотрел статистику рандома', message.from_user.username, message.from_user.first_name)
 
 
 @router.message(Command(commands=["clear"]))

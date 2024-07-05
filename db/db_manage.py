@@ -122,42 +122,6 @@ async def add_money(user_id, money):
     con.close()
 
 
-async def add_subscribe_time(user_id, time):
-    con = sqlite3.connect('db/main.db')
-    cur = con.cursor()
-
-    # Пополнение у пользователя
-    cur.execute(f'SELECT balance FROM users WHERE user_id = {user_id}')
-    old_balance = cur.fetchall()[0][0]
-    new_balance = old_balance + time
-    cur.execute(F'UPDATE users SET balance = {new_balance} WHERE user_id = {user_id}')
-
-    if money > 0 and REF_MODE:
-        # Пополнение у реферала
-        cur.execute(f'SELECT ref_id FROM users WHERE user_id = {user_id}')
-
-        ref = cur.fetchall()[0][0]
-
-        if ref:
-            cur.execute(f'SELECT balance FROM users WHERE user_id = {ref}')
-            old_balance = cur.fetchall()[0][0]
-            new_balance = old_balance + int(money * (REF_PERC / 100))
-            cur.execute(F'UPDATE users SET balance = {new_balance} WHERE user_id = {ref}')
-
-    con.commit()
-    con.close()
-
-
-async def get_leaders(num):
-    con = sqlite3.connect('db/main.db')
-    cur = con.cursor()
-
-    cur.execute(f'SELECT username, balance FROM users ORDER BY balance DESC LIMIT {num};')
-    tops_db = cur.fetchall()
-
-    return tops_db
-
-
 async def check_payment_time(user_id):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
@@ -186,23 +150,80 @@ async def update_payment_time(user_id, month=1):
     con.close()
 
 
-async def change_stats(color):
+async def change_stats(num):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
-    cur.execute(f'SELECT {color} FROM stats WHERE id = 1')
+    current_id = datetime.now().month
+    cur.execute(f'SELECT {num} FROM stats WHERE id = {current_id}')
     number = cur.fetchall()[0][0]
-    cur.execute(f'UPDATE stats SET {color} = {int(number + 1)} WHERE id = 1')
+    cur.execute(f'UPDATE stats SET {num} = {int(number + 1)} WHERE id = {current_id}')
 
     con.commit()
     con.close()
 
 
-async def get_stats():
+async def get_stats_all():
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
-    cur.execute(f'SELECT red, green, black FROM stats WHERE id = 1')
+    cur.execute(f'SELECT one, three, six FROM stats')
+    stats = cur.fetchall()
+    one, three, six = 0, 0, 0
+    for i in stats:
+        one += i[0]
+        three += i[1]
+        six += i[2]
+
+    return one, three, six
+
+
+async def get_stats_of_month():
+    con = sqlite3.connect('db/main.db')
+    cur = con.cursor()
+
+    now = datetime.now()
+    print(now.month)
+
+    cur.execute(f'SELECT one, three, six FROM stats WHERE id = {now.month}')
     number = cur.fetchall()[0]
 
     return number
+
+
+async def count_users():
+    con = sqlite3.connect('db/main.db')
+    cur = con.cursor()
+
+    cur.execute(f'SELECT COUNT(*) FROM users')
+    count_users = cur.fetchall()[0][0]
+
+    return count_users
+
+
+async def count_users_buyers():
+    con = sqlite3.connect('db/main.db')
+    cur = con.cursor()
+
+    cur.execute(f'SELECT * FROM users')
+    count_users = cur.fetchall()
+
+    date_format_str = '%Y-%m-%d %H:%M:%S.%f'
+
+    cnt = 0
+    for user in count_users:
+        end_time = datetime.strptime(user[4], date_format_str)
+        if end_time > datetime.now():
+            cnt += 1
+
+    return cnt
+
+
+async def get_users_list():
+    conn = sqlite3.connect('db/main.db')
+    cur = conn.cursor()
+
+    cur.execute('SELECT user_id FROM users')
+    users = cur.fetchall()
+
+    return users

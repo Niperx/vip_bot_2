@@ -9,12 +9,13 @@ def get_menu_kb() -> ReplyKeyboardMarkup:
         KeyboardButton(text='💲 Купить подписку')
     )
 
-    builder.row(
-        KeyboardButton(text='⭐️ Тарифы')
-    )
+    # builder.row(
+    #     KeyboardButton(text='⭐️ Тарифы')
+    # )
 
     builder.row(
-        KeyboardButton(text='📊 Статистика'),  # (🛠)
+        # KeyboardButton(text='📊 Статистика'),  # (🛠)
+        KeyboardButton(text='❔ Об этом боте'),  # (🛠)
         KeyboardButton(text='👤 Ваш профиль')
     )
 
