@@ -167,15 +167,16 @@ async def get_stats_all():
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
-    cur.execute(f'SELECT one, three, six FROM stats')
+    cur.execute(f'SELECT one, three, one_prem, three_prem FROM stats')
     stats = cur.fetchall()
-    one, three, six = 0, 0, 0
+    one, three, one_prem, three_prem = 0, 0, 0, 0
     for i in stats:
         one += i[0]
         three += i[1]
-        six += i[2]
+        one_prem += i[2]
+        three_prem += i[3]
 
-    return one, three, six
+    return one, three, one_prem, three_prem
 
 
 async def get_stats_of_month():
@@ -185,7 +186,7 @@ async def get_stats_of_month():
     now = datetime.now()
     print(now.month)
 
-    cur.execute(f'SELECT one, three, six FROM stats WHERE id = {now.month}')
+    cur.execute(f'SELECT one, three, one_prem, three_prem FROM stats WHERE id = {now.month}')
     number = cur.fetchall()[0]
 
     return number

@@ -74,7 +74,7 @@ async def cmd_start(message: types.Message, command: CommandObject):
     print(await get_info_about_user_message(message))
     await bot.send_chat_action(chat_id=message.chat.id, action='typing')
 
-    text = 'Добро пожаловать в помощника для трейдинга, более подробно об этом боте мы рассказали в видео: (ссылка)'
+    text = 'Добро пожаловать в помощника для трейдинга, более подробно об этом боте мы рассказали в видео:\nhttps://youtu.be/Gnpx6p-xMjU'
 
     user_id = message.from_user.id
     chk = await check_user_id(user_id)
@@ -113,7 +113,8 @@ async def cmd_profile(message: types.Message):
            f"этот алгоритм не имеет никакого аналога в интернете, для тех кому интересно - они не основаны на индикаторах как у всех, и это не зоны поддержки-сопротивления.\n" \
            f"Они основаны на нескольких вещах:\n" \
            f"Математические закономерности фракталы и реальные биржевые объемы.\n" \
-           f"Полную информацию конечно же никто не даст, но думаю что важнее то что это реально отрабатывает каким-то фантастическим чудом, а не то по какому принципу оно работает. "
+           f"Полную информацию конечно же никто не даст, но думаю что важнее то что это реально отрабатывает каким-то фантастическим чудом, а не то по какому принципу оно работает.\n\n" \
+           f"Поддержка бота - @cryptolog_help"
 
     await message.answer(text, reply_markup=get_menu_kb(), parse_mode='HTML')
 
@@ -148,23 +149,25 @@ async def cmd_profile(message: types.Message):
     await bot.send_chat_action(chat_id=message.chat.id, action='typing')
 
     stats = await get_stats_all()
-    one, three, six = stats[0], stats[1], stats[2]
+    one, three, one_prem, three_prem = stats[0], stats[1], stats[2], stats[3]
 
     buyers = await count_users_buyers()
     buyers_month = await get_stats_of_month()
 
-    full_money = one * RATES['one'] + three * RATES['three'] + six * RATES['six']
-    month_money = buyers_month[0] * RATES['one'] + buyers_month[1] * RATES['three'] + buyers_month[2] * RATES['six']
+    full_money = one * RATES['one'] + three * RATES['three'] + one_prem * RATES['one_prem'] + three_prem * RATES['three_prem']
+    month_money = buyers_month[0] * RATES['one'] + buyers_month[1] * RATES['three'] + buyers_month[2] * RATES['one_prem'] + buyers_month[3] * RATES['three_prem']
 
     users = await count_users()
 
     text = f'<b>Статистика:</b>\n\n' \
            f'Кол-во пользователей: {users}\n' \
            f'Кол-во покупателей: {buyers}\n\n' \
-           f'На сколько месяцев куплено:\n' \
+           f'На сколько месяцев куплено (без чата):\n' \
            f'-- 1 месяц: {one}\n' \
-           f'-- 3 месяца: {three}\n' \
-           f'-- 6 месяцев: {six}\n\n' \
+           f'-- 3 месяца: {three}\n\n' \
+           f'На сколько месяцев куплено (с чатом):\n' \
+           f'-- 1 месяц: {one_prem}\n' \
+           f'-- 3 месяца: {three_prem}\n\n' \
            f'Прибыль за месяц: ${month_money}\n' \
            f'Прибыль всего: ${full_money}\n'
 

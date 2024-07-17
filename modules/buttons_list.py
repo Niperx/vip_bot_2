@@ -44,9 +44,12 @@ def get_access_kb():
 def get_rates_kb():
     buttons = [
         [
-            InlineKeyboardButton(text='🟠 1 месяц', callback_data='one_month'),
-            InlineKeyboardButton(text='🟡 3 месяца', callback_data='three_month'),
-            InlineKeyboardButton(text='🟢 12 месяцев', callback_data='twelve_month')
+            InlineKeyboardButton(text='🟡 1 месяц', callback_data='one_month'),
+            InlineKeyboardButton(text='🟡 3 месяца', callback_data='three_month')
+        ],
+        [
+            InlineKeyboardButton(text='🟢 1 месяц (+ чат)', callback_data='one_month_prem'),
+            InlineKeyboardButton(text='🟢 3 месяца (+ чат)', callback_data='three_month_prem')
         ]
     ]
 

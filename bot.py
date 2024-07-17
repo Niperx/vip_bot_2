@@ -39,7 +39,7 @@ async def main():
     logger.info("Starting bot")
 
     # scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
-    # scheduler.add_job(buy.check_subscribe, trigger='interval', seconds=20)
+    # scheduler.add_job(buy.check_subscribe, trigger='interval', seconds=1800) #21600
     # scheduler.start()
 
     dp.include_routers(
