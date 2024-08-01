@@ -4,15 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b23453d8-1106-47c6-b6dd-b8336ab97e96" name="Changes" comment="v1.0">
+    <list default="true" id="b23453d8-1106-47c6-b6dd-b8336ab97e96" name="Changes" comment="v1.1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db/db_manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/db/db_manage.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handlers/buy.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/buy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/handlers/common.py" beforeDir="false" afterPath="$PROJECT_DIR$/handlers/common.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/admins_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/admins_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/buttons_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/buttons_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,7 +95,14 @@
       <option name="project" value="LOCAL" />
       <updated>1720171134049</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="v1.1">
+      <created>1721189074058</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1721189074058</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -116,6 +120,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="." />
     <MESSAGE value="v1.0" />
-    <option name="LAST_COMMIT_MESSAGE" value="v1.0" />
+    <MESSAGE value="v1.1" />
+    <option name="LAST_COMMIT_MESSAGE" value="v1.1" />
   </component>
 </project>

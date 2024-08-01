@@ -144,7 +144,7 @@ async def process_month(callback: types.CallbackQuery, state: FSMContext):
 async def process_benefit(callback: types.CallbackQuery, state: FSMContext):
     print(await get_info_about_user_callback(callback))
     text = f"Ожидание платежа...\n\n"\
-           f"❗️ ПРИКРЕПИТЕ ФОТО ЧЕКА ЛИБО ССЫЛКУ ❗️\n\n"\
+           f"❗️ ПРИКРЕПИТЕ ФОТО ЧЕКА ❗️\n\n"\
            f'Нажмите на кнопку "⬅️ Назад", если что-то пошло не так или вы передумали'
     await callback.message.edit_text(text, parse_mode='HTML', reply_markup=get_back_kb())
 
@@ -398,13 +398,13 @@ async def cmd_get_confirmation(message: types.Message, state: FSMContext):
 
 
 async def check_subscribe():
-    all_users = await get_users_list()
+    all_users = await get_users_list_of_owner()
 
     for user in all_users:
         try:
             payment_time = await check_payment_time(user[0])
             member_status = await bot.get_chat_member(CHANNEL_ID, user[0])
-            print(type(member_status), user[0])
+            # print(type(member_status), user[0])
 
             if payment_time < 0 \
                     and user[0] not in admins_list.ADMINS \
@@ -413,11 +413,13 @@ async def check_subscribe():
 
                 try:
                     await bot.ban_chat_member(chat_id=GROUP_ID, user_id=user[0])
+                    print(type(member_status), user[0])
                     print('Забанен')
                 except:
                     pass
                 try:
                     await bot.ban_chat_member(chat_id=CHANNEL_ID, user_id=user[0])
+                    print(type(member_status), user[0])
                     print('Забанен')
                 except:
                     pass

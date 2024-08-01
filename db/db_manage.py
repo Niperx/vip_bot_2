@@ -35,7 +35,7 @@ async def check_db():  # Проверка на ДБ, при отсутствии
     con.close()
 
 
-async def create_user(user_id, username=None, balance=0, ref_id=None):  # создание нового пользователя
+async def create_user(user_id, username=None, balance=0, ref_id=None, owner='misha'):  # создание нового пользователя
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
     cur.execute(f'SELECT id FROM users ORDER BY id desc')
@@ -47,8 +47,8 @@ async def create_user(user_id, username=None, balance=0, ref_id=None):  # соз
     else:
         new_id = 1
 
-    user_info = (new_id, user_id, username, balance, datetime.now(), ref_id, datetime.now())
-    cur.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?);", user_info)
+    user_info = (new_id, user_id, username, balance, datetime.now(), ref_id, datetime.now(), owner)
+    cur.execute("INSERT INTO users VALUES(?,?,?,?,?,?,?,?);", user_info)
 
     if ref_id is not None:
         cur.execute(f'SELECT balance FROM users WHERE user_id = {ref_id}')
@@ -192,21 +192,21 @@ async def get_stats_of_month():
     return number
 
 
-async def count_users():
+async def count_users(owner='misha'):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
-    cur.execute(f'SELECT COUNT(*) FROM users')
+    cur.execute('SELECT COUNT(*) FROM users WHERE owner = ?', (owner,))
     count_users = cur.fetchall()[0][0]
 
     return count_users
 
 
-async def count_users_buyers():
+async def count_users_buyers(owner='misha'):
     con = sqlite3.connect('db/main.db')
     cur = con.cursor()
 
-    cur.execute(f'SELECT * FROM users')
+    cur.execute('SELECT * FROM users WHERE owner = ?', (owner,))
     count_users = cur.fetchall()
 
     date_format_str = '%Y-%m-%d %H:%M:%S.%f'
@@ -225,6 +225,16 @@ async def get_users_list():
     cur = conn.cursor()
 
     cur.execute('SELECT user_id FROM users')
+    users = cur.fetchall()
+
+    return users
+
+
+async def get_users_list_of_owner(owner='misha'):
+    conn = sqlite3.connect('db/main.db')
+    cur = conn.cursor()
+
+    cur.execute('SELECT user_id FROM users WHERE owner = ?', (owner,))
     users = cur.fetchall()
 
     return users
