@@ -204,6 +204,72 @@ async def cmd_access(message: types.Message):
     print(type(a))
 
 
+@router.message(Command(commands=["subs"]))
+async def cmd_access(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    all_users = await get_users_list_of_owner()
+    last_days_users = []
+    for user in all_users:
+        payment_time = await check_payment_time(user[0])
+        if 0 < payment_time < 86400:
+            username = await get_username(user[0])
+            last_days_users.append([user[0], username])
+
+    text = 'Последний день подписки:\n'
+    i = 0
+    for us in last_days_users:
+        i += 1
+        text += f'{i}. {us[0]} -- @{us[1]}\n'
+    text += f'\nВсего: {i} пользователей'
+    await message.answer(text)
+
+
+@router.message(Command(commands=["subs48"]))
+async def cmd_access(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    all_users = await get_users_list_of_owner()
+    last_days_users = []
+    for user in all_users:
+        payment_time = await check_payment_time(user[0])
+        if 0 < payment_time < 172800:
+            username = await get_username(user[0])
+            last_days_users.append([user[0], username])
+
+    text = 'Последние 48 часов подписки:\n'
+    i = 0
+    for us in last_days_users:
+        i += 1
+        text += f'{i}. {us[0]} -- @{us[1]}\n'
+    text += f'\nВсего: {i} пользователей'
+    await message.answer(text)
+
+
+@router.message(Command(commands=["subs72"]))
+async def cmd_access(message: types.Message):
+    print(await get_info_about_user_message(message))
+    await bot.send_chat_action(chat_id=message.chat.id, action='typing')
+
+    all_users = await get_users_list_of_owner()
+    last_days_users = []
+    for user in all_users:
+        payment_time = await check_payment_time(user[0])
+        if 0 < payment_time < 259200:
+            username = await get_username(user[0])
+            last_days_users.append([user[0], username])
+
+    text = 'Последние 72 часа подписки:\n'
+    i = 0
+    for us in last_days_users:
+        i += 1
+        text += f'{i}. {us[0]} -- @{us[1]}\n'
+    text += f'\nВсего: {i} пользователей'
+    await message.answer(text)
+
+
 @router.message(ChatTypeFilter(chat_type=["private"]), IsAdmin(admin_ids=admins_list.ADMINS), F.text == '-')
 async def cmd_get_confirmation(message: types.Message, state: FSMContext):
     print(await get_info_about_user_message(message))
@@ -409,7 +475,9 @@ async def check_subscribe():
             if payment_time < 0 \
                     and user[0] not in admins_list.ADMINS \
                     and not isinstance(member_status, types.ChatMemberAdministrator) \
-                    and not isinstance(member_status, types.ChatMemberOwner):
+                    and not isinstance(member_status, types.ChatMemberOwner) \
+                    and not isinstance(member_status, types.ChatMemberRestricted) \
+                    and not isinstance(member_status, types.ChatMemberBanned):
 
                 try:
                     await bot.ban_chat_member(chat_id=GROUP_ID, user_id=user[0])
@@ -423,11 +491,36 @@ async def check_subscribe():
                     print('Забанен')
                 except:
                     pass
-                if isinstance(member_status, types.ChatMemberMember):
-                    await bot.send_message(user[0], 'Ваша подписка закончилась, чтобы продолжить пользоваться услугами, можете купить подписку снова!')
+
+                try:
+                    if isinstance(member_status, types.ChatMemberMember):
+                        username = await get_username(user[0])
+                        await bot.send_message(user[0], 'Ваша подписка закончилась, чтобы продолжить пользоваться услугами, можете купить подписку снова!')
+                        await bot.send_message(admin[1], f'Платная подписка пользователя закончилась @{username}!')
+                        await bot.send_message(admin[2], f'Платная подписка пользователя закончилась @{username}!')
+                except:
+                    continue
         except:
             continue
 
+
+async def check_last_days():
+    all_users = await get_users_list_of_owner()
+    last_days_users = []
+    for user in all_users:
+        payment_time = await check_payment_time(user[0])
+        if 0 < payment_time < 86400:
+            username = await get_username(user[0])
+            last_days_users.append([user[0], username])
+
+    text = 'Последний день подписки:\n'
+    i = 0
+    for us in last_days_users:
+        i += 1
+        text += f'{i}. {us[0]} -- @{us[1]}\n'
+    text += f'\nВсего: {i} пользователей'
+    await bot.send_message(admin[1], text)
+    await bot.send_message(admin[2], text)
 
 
 
